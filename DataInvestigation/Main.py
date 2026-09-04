@@ -6,7 +6,7 @@ from confluent_kafka import Producer
 
 
 broker = os.getenv("KAFKA_BROKER", "localhost:9092")
-topic = "raw-lines"
+TOPIC = 'raw-events'
 
 print(f"Connecting to Kafka broker at: {broker}...")
 
@@ -44,7 +44,7 @@ def data_exploration(file_path: str) -> None:
         for row in df.to_dict(orient="records"):
             payload = json.dumps(row).encode("utf-8")
             key = str(row(["ResponseId"])).encode("utf-8")
-            producer.produce(topic=topic, key=key, value=payload, callback=delivery_report)
+            producer.produce(topic=TOPIC, key=key, value=payload, callback=delivery_report)
             producer.poll(0)
         producer.flush()
     except FileNotFoundError:
