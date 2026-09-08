@@ -43,7 +43,7 @@ def data_exploration(file_path: str) -> None:
         df = df.where(pd.notnull(df), None)
         for row in df.to_dict(orient="records"):
             payload = json.dumps(row).encode("utf-8")
-            key = str(row(["ResponseId"])).encode("utf-8")
+            key = str(row["ResponseId"]).encode("utf-8")
             producer.produce(topic=TOPIC, key=key, value=payload, callback=delivery_report)
             producer.poll(0)
         producer.flush()
@@ -53,4 +53,4 @@ def data_exploration(file_path: str) -> None:
 
 
 if __name__ == "__main__":
-    data_exploration("./developer_ai_learning_raw.csv")
+    data_exploration("../developer_ai_learning_raw.csv")

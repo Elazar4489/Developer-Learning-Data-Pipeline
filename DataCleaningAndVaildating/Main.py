@@ -9,7 +9,7 @@ INPUT_TOPIC = 'raw-events'
 OUTPUT_TOPIC = 'processed-events'
 consumer_conf = {
     'bootstrap.servers': BOOTSTRAP_SERVERS,
-    'group.id': 'analytics-pipeline-group6',
+    'group.id': 'analytics-pipeline-group',
     'auto.offset.reset': 'earliest',
     'enable.auto.commit': False
 }
@@ -97,7 +97,15 @@ def transform_data(raw_data, cleaned_data):
         # os.makedirs("../my_work", exist_ok=True)
         if df.duplicated().sum() > 0:
             df = df.drop_duplicates()
-        df['YearsCode'] = df['YearsCode'].astype('Int64')
+        # 1. החלפת מחרוזות הקצה בערכים מספריים הגיוניים
+        df['YearsCode'] = df['YearsCode'].replace({
+        'Less than 1 year': 0,
+        'More than 50 years': 51
+        })
+
+        # 2. המרה בטוחה למספר - errors='coerce' יהפוך כל טקסט לא צפוי אחר ל-NaN במקום לקרוס
+        df['YearsCode'] = pd.to_numeric(df['YearsCode'], errors='coerce').astype('Int64')
+        # df['YearsCode'] = df['YearsCode'].astype('Int64')
         df['LearnCode'] = df['LearnCode'].apply(split_multiselect)
         df['AILearnHow'] = df['AILearnHow'].apply(split_multiselect)
         # print(df.shape)
@@ -113,18 +121,26 @@ def transform_data(raw_data, cleaned_data):
     # return df
 
 def produce_processed_data(file_name) -> None:
-    df = pd.read_json(file_name, lines=True)
-    for row in df.to_dict(orient='records'):
-        payload = json.dumps(row).encode('utf-8')
-        
-        key = str(row.get('ResponseId', '')).encode('utf-8')
+    if not os.path.exists(file_name):
+        print(f"Error: {file_name} does not exist.")
+        return
 
-        producer.produce(
-            topic=OUTPUT_TOPIC,
-            key=key,
-            value=payload
-        )
-        producer.poll(0)
+    with open(file_name, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            
+            row = json.loads(line)
+            key = str(row.get('ResponseId', '')).encode('utf-8')
+            payload = line.encode('utf-8') 
+
+            producer.produce(
+                topic=OUTPUT_TOPIC,
+                key=key,
+                value=payload
+            )
+            producer.poll(0)
 
     producer.flush()
 

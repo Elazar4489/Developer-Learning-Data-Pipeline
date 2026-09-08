@@ -1,0 +1,6 @@
+@DeveloperLearningDataPipelineApi_HostAddress = http://localhost:5091
+
+GET {{DeveloperLearningDataPipelineApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
