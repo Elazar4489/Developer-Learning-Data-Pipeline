@@ -22,7 +22,7 @@ builder.Services.AddSingleton(sp =>
     var client = sp.GetRequiredService<IMongoClient>();
     var mongoSettings = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
     var database = client.GetDatabase(mongoSettings.DatabaseName);
-    return database.GetCollection<DeveloperAiLearning>(mongoSettings.CollectionName);
+    return database.GetCollection<Respondent>(mongoSettings.CollectionName);
 });
 
 builder.Services.AddSingleton<IConsumer<string, string>>(sp =>

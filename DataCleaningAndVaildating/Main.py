@@ -4,7 +4,7 @@ import time
 import pandas as pd
 from confluent_kafka import Consumer, Producer, KafkaError
 
-BOOTSTRAP_SERVERS = 'localhost:9092'
+BOOTSTRAP_SERVERS = os.getenv("KAFKA_BROKER", "localhost:9092")
 INPUT_TOPIC = 'raw-events'
 OUTPUT_TOPIC = 'processed-events'
 consumer_conf = {

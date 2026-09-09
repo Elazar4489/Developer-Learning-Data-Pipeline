@@ -15,13 +15,13 @@ public class KafkaToMongoWorker : BackgroundService
         PropertyNameCaseInsensitive = true
     };
     private readonly IConsumer<string, string> _consumer;
-    private readonly IMongoCollection<DeveloperAiLearning> _collection;
+    private readonly IMongoCollection<Respondent> _collection;
     private readonly KafkaSettings _kafkaSettings;
     private readonly ILogger<KafkaToMongoWorker> _logger;
 
     public KafkaToMongoWorker(
         IConsumer<string, string> consumer,
-        IMongoCollection<DeveloperAiLearning> collection,
+        IMongoCollection<Respondent> collection,
         IOptions<KafkaSettings> kafkaOptions,
         ILogger<KafkaToMongoWorker> logger)
     {
@@ -37,7 +37,7 @@ public class KafkaToMongoWorker : BackgroundService
         _consumer.Subscribe(_kafkaSettings.Topic);
 
         const int batchSize = 1000; 
-        var batch = new List<DeveloperAiLearning>(batchSize);
+        var batch = new List<Respondent>(batchSize);
         ConsumeResult<string, string>? lastConsumeResult = null;
 
         while (!stoppingToken.IsCancellationRequested)
@@ -48,7 +48,7 @@ public class KafkaToMongoWorker : BackgroundService
 
                 if (consumeResult?.Message?.Value != null)
                 {
-                    var data = JsonSerializer.Deserialize<DeveloperAiLearning>(consumeResult.Message.Value, jsonOptions);
+                    var data = JsonSerializer.Deserialize<Respondent>(consumeResult.Message.Value, jsonOptions);
                     if (data != null)
                     {
                         batch.Add(data);

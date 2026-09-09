@@ -1,0 +1,84 @@
+services:
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ping: 1})' --quiet || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - mongo_data:/data/db
+
+  python-producer:
+    build: ./DataInvestigation
+    container_name: python-producer
+    environment:
+      KAFKA_BROKER: "kafka:9092"
+    depends_on:
+      kafka:
+        condition: service_healthy
+  
+  python-processor:
+    build: ./DataCleaningAndVaildating
+    container_name: python-processor
+    environment:
+      KAFKA_BROKER: "kafka:9092"
+    depends_on:
+      kafka:
+        condition: service_healthy
+  
+  csharp-consumer:
+    build: ./ConsumFromKafkaAndSendToMongo
+    container_name: csharp-consumer
+    environment:
+      Kafka__BootstrapServers: "kafka:9092"
+      Mongo__ConnectionString: "mongodb://mongo:27017"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+
+  csharp-api:
+    build: ./DeveloperLearningDataPipelineApi
+    container_name: csharp-api
+    ports:
+      - "5000:8080"
+    environment:
+      Mongo__ConnectionString: "mongodb://mongo:27017"
+      ASPNETCORE_ENVIRONMENT: "Development"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
+  kafka-data:

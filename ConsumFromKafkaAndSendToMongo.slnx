@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="ConsumFromKafkaAndSendToMongo/ConsumFromKafkaAndSendToMongo.csproj" />
+  <Project Path="DeveloperLearningDataPipelineApi/DeveloperLearningDataPipelineApi.csproj" />
 </Solution>

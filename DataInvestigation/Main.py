@@ -53,4 +53,4 @@ def data_exploration(file_path: str) -> None:
 
 
 if __name__ == "__main__":
-    data_exploration("../developer_ai_learning_raw.csv")
+    data_exploration("./developer_ai_learning_raw.csv")
